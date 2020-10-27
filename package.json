@@ -1,0 +1,33 @@
+{
+  "name": "roam-js-extensions",
+  "version": "1.0.0",
+  "description": "...",
+  "main": "index.js",
+  "scripts": {
+    "build": "webpack --config ./webpack.production.config.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/burke/roam-js-extensions.git"
+  },
+  "keywords": [
+    "Roam"
+  ],
+  "author": "burke",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/burke/roam-js-extensions/issues"
+  },
+  "homepage": "https://github.com/burke/roam-js-extensions#readme",
+  "devDependencies": {
+    "babel-preset-env": "^1.7.0",
+    "eslint": "^7.7.0",
+    "ts-loader": "^8.0.3",
+    "typescript": "^4.0.2",
+    "webpack": "^4.44.1",
+    "webpack-cli": "^3.3.12"
+  },
+  "dependencies": {
+    "roam-client": "^1.19.6"
+  }
+}
