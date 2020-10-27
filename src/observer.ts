@@ -1,6 +1,6 @@
 import { getAttrConfigFromQuery } from "roam-client";
 
-export const createObserver = (
+export const createRoamBodyObserver = (
   mutationCallback: (mutationList?: MutationRecord[]) => void
 ) =>
   createDivObserver(

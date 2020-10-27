@@ -1,6 +1,7 @@
 import { getConfigFromBlock } from "./entry-helpers";
-import { createObserver } from "./observer";
+import { createRoamBodyObserver } from "./observer";
 import { getConfigFromPage, parseRoamDate, createIconButton } from "roam-client";
+import { filterSetup } from "./filter";
 
 type SortConfig = {
   [column: string]: {
@@ -8,6 +9,11 @@ type SortConfig = {
     index: number;
     priority: number;
   };
+};
+
+type FilterConfig = {
+  field: string;
+  filter: string;
 };
 
 type VisibilityConfig = string[];
@@ -27,19 +33,18 @@ const getKey = (h: HTMLTableHeaderCellElement) =>
 const getMaxPriority = (sortConfig: SortConfig) =>
   Math.max(...Object.values(sortConfig).map((v) => v.priority));
 
-const redisplayTable = (t: HTMLTableElement, sortConfig: SortConfig, visibilityConfig: VisibilityConfig) => {
+const redisplayTable = (t: HTMLDivElement, sortConfig: SortConfig, visibilityConfig: VisibilityConfig) => {
   sortTable(t, sortConfig);
   hideColumns(t, visibilityConfig);
 }
 
-const hideColumns = (t: HTMLTableElement, visibilityConfig: VisibilityConfig) => {
+const hideColumns = (t: HTMLDivElement, visibilityConfig: VisibilityConfig) => {
   if (visibilityConfig.length == 0) {
     return;
   }
   const visibilityByIndex = [] as boolean[];
   const headers = Array.from(t.getElementsByTagName("th"));
   headers.forEach((th, index) => {
-    console.log(th.dataset.attribute);
     visibilityByIndex[index] = visibilityConfig.includes(th.dataset.attribute);
     th.hidden = !visibilityByIndex[index];
   });
@@ -53,7 +58,7 @@ const hideColumns = (t: HTMLTableElement, visibilityConfig: VisibilityConfig) =>
   });
 };
 
-const sortTable = (t: HTMLTableElement, sortConfig: SortConfig) => {
+const sortTable = (t: HTMLDivElement, sortConfig: SortConfig) => {
   const headers = Array.from(t.getElementsByTagName("th"));
   headers.forEach((h) => {
     const { priority: p, asc } = sortConfig[getKey(h)];
@@ -127,31 +132,35 @@ const sortTable = (t: HTMLTableElement, sortConfig: SortConfig) => {
   rows.forEach((r) => body.appendChild(r));
 };
 
-const observerCallback = () => {
-  const tables = Array.from(
-    document.getElementsByClassName("roam-table")
-  ) as HTMLTableElement[];
-
-  tables.forEach(processTable);
-};
-
-const processTable = (tableElement: HTMLTableElement) => {
-  // bail if we've already processed this table
-  if (tableElement.getElementsByClassName("bp3-icon").length > 0) {
+const setupTable = (tableElement: HTMLDivElement) => {
+  if (tableElement.dataset.supertable) {
     return;
   }
+  tableElement.dataset.supertable = "1";
 
   const config = getConfigFromBlock(tableElement);
 
-  const ths = Array.from(
-    tableElement.getElementsByTagName("th")
-  ) as HTMLTableHeaderCellElement[];
-
   const sortConfig: SortConfig = {};
+  let filterConfig: FilterConfig = undefined;
+
+  const defaultFilter = (config["Default Filter"]
+    ?.split("=")
+    ?.map((s: string) => s.trim()) || []) as string[];
+
+  if (defaultFilter) {
+    filterConfig = {
+      field: defaultFilter[0],
+      filter: defaultFilter[1],
+    };
+  }
 
   const visibilityConfig: VisibilityConfig = (config["Visible"]
     ?.split(",")
     ?.map((s: string) => s.trim()) || []) as string[];
+
+  const ths = Array.from(
+    tableElement.getElementsByTagName("th")
+  ) as HTMLTableHeaderCellElement[];
 
   ths.forEach((th, index) => {
     // We add buttons and stuff, so let's store this now to keep it clear which
@@ -213,7 +222,17 @@ const processTable = (tableElement: HTMLTableElement) => {
   if (defaultSort.length) {
     redisplayTable(tableElement, sortConfig, visibilityConfig);
   }
+
+  filterSetup(tableElement, filterConfig);
 };
 
-observerCallback();
-createObserver(observerCallback);
+const setup = () => {
+  const tables = Array.from(
+    document.getElementsByClassName("roam-table")
+  ) as HTMLDivElement[];
+
+  tables.forEach(setupTable);
+};
+
+setup();
+createRoamBodyObserver(setup);

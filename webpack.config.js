@@ -1,7 +1,7 @@
 const path = require("path");
 
 const entry = {
-  'attr-tables': './src/index.ts',
+  'supertable': './src/index.ts',
 };
 
 module.exports = {
